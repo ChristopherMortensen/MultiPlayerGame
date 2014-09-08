@@ -1,37 +1,22 @@
 package network;
 
+import entity.Entity;
 import entity.Point;
 import java.io.*;
 import java.net.*;
 import java.util.ArrayList;
 
-public class Server_Client {
+public class Client {
 
     //== Fields
-    //== Streams and server-related objects
     private ObjectOutputStream output;
     private ObjectInputStream input;
     private ServerSocket server;
     private Socket connection;
-    private String networkType;
-    //== Only used by client
     private String serverIP;
 
-    //== Only String Constructor --> Server
-    public Server_Client(String networkType) {
-        try {
-            this.networkType = networkType;
-            server = new ServerSocket(6789, 100);
-        } catch (IOException ioException) {
-            System.out.println("Error in creating the ServerSocket");
-            ioException.printStackTrace();
-        }
-
-    }
-
-    //== String Param Constructor --> Client
-    public Server_Client(String networkType, String serverIP) {
-        this.networkType = networkType;
+    //== Constructor
+    public Client(String serverIP) {
         this.serverIP = serverIP;
     }
 
@@ -42,20 +27,13 @@ public class Server_Client {
             setupStreams();
         } catch (IOException ioException) {
             ioException.printStackTrace();
-            if(networkType.equalsIgnoreCase("server"))
-            System.out.println("Problems obtaining the incoming socket");
-            else
-                System.out.println("Problems reaching the server");
+            System.out.println("Problems reaching the server");
         }
     }
 
     private void waitForConnection() throws IOException {
-        if (this.networkType.equalsIgnoreCase("server")) {
-            connection = server.accept();
-            
-        } else {
-            connection = new Socket(InetAddress.getByName(serverIP), 6789);
-        }
+        connection = new Socket(InetAddress.getByName(serverIP), 6789);
+        System.out.println("Connectected to server");
     }
 
     //== Get stream to send and receive data
@@ -90,10 +68,6 @@ public class Server_Client {
         }
     }
 
-    public String getNetworkType(){
-        return this.networkType;
-    }
-    
     //== Transmissions to send
     //== Space = jump
     public void transmitJump() {
@@ -121,19 +95,8 @@ public class Server_Client {
             System.out.println("Error in sending an Game Over-transmission");
         }
     }
-    
-    public void transmitEntityCenters(ArrayList<double[]> entityCenters){
-        String transmission = "";
-        for(double[] center : entityCenters)
-            transmission += ("," + center[0] + "|" + center[1]);
-        try{//== This substring-thing is because of the first comma and last punctuation concatenated in the for-loop 
-            output.writeObject(transmission.substring(1, transmission.length()));
-        }catch(IOException ioException){
-            System.out.println("Error in sending an EntityCenters-transmission");
-        }
-    }
-    
-    public ArrayList<Point> checkForEntityCenters(){
+
+    public ArrayList<Point> checkForEntityCenters() {
         String signal = "";
         try {
             signal = (String) input.readObject();
@@ -143,13 +106,53 @@ public class Server_Client {
             ioException.printStackTrace();
         }
         ArrayList<Point> centers = new ArrayList<>();
-        String[] pairs = signal.split(",");
-        for(String pair : pairs){
-            String[] points = pair.split("|");
-            Point point = new Point(Double.parseDouble(points[0]), Double.parseDouble(points[1]));
-            centers.add(point);
+
+        boolean containsNotPlayer = !signal.contains("player") && !signal.isEmpty();
+
+        if (containsNotPlayer) {
+            String[] pairs = signal.split(",");
+            for (String pair : pairs) {
+                String[] points = pair.split("|");
+                Point point = new Point(Double.parseDouble(points[0]), Double.parseDouble(points[1]));
+                centers.add(point);
+            }
         }
-        
+
         return centers;
+    }
+
+    public ArrayList<Entity> checkForEntityTypes() {
+        String signal = "";
+        try {
+            signal = (String) input.readObject();
+        } catch (ClassNotFoundException classNotFoundException) {
+            System.out.println("Class not found...");
+        } catch (IOException ioException) {
+            ioException.printStackTrace();
+        }
+        ArrayList<Entity> entities = new ArrayList<>();
+
+        boolean containsPlayer = signal.contains("player") && !signal.isEmpty();
+
+        if (containsPlayer) {
+            String[] types = signal.split(",");
+            for (String type : types) {
+                entities.add(new Entity(type));
+            }
+        }
+
+        return entities;
+    }
+
+    public String checkForEntitiesTransmitted() {
+        String transmission = "";
+        try {
+            transmission = (String) input.readObject();
+        } catch (ClassNotFoundException classNotFoundException) {
+            System.out.println("Class not found...");
+        } catch (IOException ioException) {
+            ioException.printStackTrace();
+        }
+        return transmission;
     }
 }

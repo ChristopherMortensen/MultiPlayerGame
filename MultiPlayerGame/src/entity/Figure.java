@@ -88,9 +88,11 @@ public class Figure {
     }
     
     //== Made to update already existing Obstacles, when they move across the screen
+    //== NOTICE -> IF X == 0, THEN IT WILL ONLY UPDATE THE COORDINATES OF THIS SHAPE. 
     public void updateObstacle(double x){
         shapes.clear();
         
+        if(x != 0)
         center.setX(center.getX() - x);
         
         //== Upper Long Shape
@@ -195,6 +197,11 @@ public class Figure {
     
     public Point getCenter(){
         return this.center;
+    }
+    
+    public void setCenter(double x, double y){
+        this.center.setX(x);
+        this.center.setY(y);
     }
 
 }

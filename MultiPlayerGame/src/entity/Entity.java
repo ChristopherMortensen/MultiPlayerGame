@@ -34,6 +34,19 @@ public class Entity {
     public void updateObstacle(double x) {
         this.figure.updateObstacle(x);
     }
+    
+    public void update(){
+        switch(this.figure.getType()){
+            case "obstacle":
+                    updateObstacle(0);
+                    break;
+                case "player":
+                    this.getFigure().updatePlayer();
+                    break;
+                default:
+                    break;
+        }
+    }
 
     
     public void tick() {
@@ -84,4 +97,11 @@ public class Entity {
         return velocityY;
     }
 
+    @Override
+    public String toString(){
+        return 
+                "type: " + this.figure.getType() +
+                "\tCenter-X: " + this.figure.getCenter().getX() +
+                "\tCenter-Y: " + this.figure.getCenter().getY();
+    }
 }
